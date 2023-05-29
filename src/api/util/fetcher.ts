@@ -167,7 +167,7 @@ const fetcher = async ({
             console.log('Error: ' + error.message);
         }
 
-        return { error: errorData };
+        return { hasError: true, error: errorData };
 
         //console.log(error, 'error inside fetcher');
         //throw new Error(error.response.data.message);
