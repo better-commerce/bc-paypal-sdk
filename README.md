@@ -25,14 +25,6 @@ PayPalEnvironment.init("<client_id>", "<app_secret>", [useSandbox: boolean]);
 ### Get Order Details
 
 ```
-const data = {
-    object_reference_id: "john@smith.com",
-    mobile_number: "2233556644",
-    email_address: "john@smith.com",
-    first_name: "John",
-    last_name: "Smith",
-    mobile_country_code: "+1",
-};
 const order = new Order();
 const result = await order.get("<order_id>");
 ```
