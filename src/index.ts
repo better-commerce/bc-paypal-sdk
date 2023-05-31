@@ -1,5 +1,5 @@
 import { PayPalEnvironment } from "./base/config/PayPalEnvironment";
-import { Order } from "./payPal/order";
+import { Order } from "./payPal/Order";
 import { APIConnectionException, APIException, AuthenticationException, BaseException, InvalidRequestException } from "./base/entity";
 
 export { PayPalEnvironment, Order };
