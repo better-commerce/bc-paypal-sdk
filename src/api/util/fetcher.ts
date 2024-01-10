@@ -17,12 +17,46 @@ const SingletonFactory = (function () {
 
     axiosInstance.interceptors.request.use(
         (config: any) => {
-            const token = getToken();
-            //this is to be changed when we implement currency / language switcher
-            if (token) {
-                config.headers['Authorization'] = 'Bearer ' + token;
-            }
-            return config;
+
+            /**
+             * Error: {"status":401,"data":{"error":"invalid_token","error_description":"Access Token not found in cache"}}
+             * Due to above error received from the gateway, generate a new token on each request. 
+             * It seems Paypal internally caches the token and returns the same token value in subsequent calls till the
+             * time it gets expired.
+             * 
+             * For e.g. - Receiving the same token when 10 concurrent/subsequent calls are sent on generate token API:
+             * 
+             * ------
+             * Call 1
+             * ------
+             * - token: A21AAOPxbnmoPPv0f03H404UjVAnxpFldkOSBrVEm7m6o5M4jdEMcs2Bg6ET7UszYoy92BmIHckGCKw4kAWPCUryJFSLxplGA
+             * - expires_in: 32317
+             * 
+             * ------
+             * Call 2
+             * ------
+             * - token: A21AAOPxbnmoPPv0f03H404UjVAnxpFldkOSBrVEm7m6o5M4jdEMcs2Bg6ET7UszYoy92BmIHckGCKw4kAWPCUryJFSLxplGA
+             * - expires_in: 32333
+             */
+
+            const url = new URL('v1/oauth2/token', PayPalEnvironment.getBaseUrl());
+            const auth = Buffer.from(`${PayPalEnvironment.getClientId()}:${PayPalEnvironment.getAppSecret()}`).toString("base64");
+            return axios({
+                url: url.href,
+                method: RequestMethod.POST,
+                data: `grant_type=client_credentials`,
+                headers: {
+                    Authorization: `Basic ${auth}`,
+                },
+            }).then((res: any) => {
+                const token = res?.data?.access_token;
+                if (token) {
+                    config.headers['Authorization'] = 'Bearer ' + token;
+                }
+                return config;
+            }).catch((error: any) => {
+                return config;
+            });
         },
         (err) => Promise.reject(err)
     );
