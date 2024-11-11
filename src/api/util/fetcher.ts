@@ -61,6 +61,11 @@ const SingletonFactory = (function () {
         (err) => Promise.reject(err)
     );
 
+    /**
+     * Creates an axios interceptor to catch 401 errors and try to refresh the token.
+     * If the token refresh causes another 401 error, the interceptor is ejected to prevent an infinite loop.
+     * The interceptor is then recreated after the token refresh.
+     */
     function createAxiosResponseInterceptor() {
         const interceptor = axiosInstance.interceptors.response.use(
             (response: any) => response,
@@ -110,15 +115,25 @@ const axiosInstance = SingletonFactory.axiosInstance;
 
 Object.freeze(axiosInstance)
 
-const fetcher = async ({
-    url = '',
-    method = 'post',
-    data = {},
-    params = {},
-    headers = {},
-    cookies = {},
-    baseUrl = "",
-}: any) => {
+/**
+ * A helper function to call the PayPal APIs. It handles the
+ * authentication and the refreshing of the access token.
+ *
+ * @param {Object} options - The options to send with the request.
+ * @param {string} options.url - The URL of the API endpoint.
+ * @param {string} options.method - The HTTP method to use for the request.
+ * @param {Object} options.data - The data to send with the request.
+ * @param {Object} options.params - The URL parameters to send with the request.
+ * @param {Object} options.headers - The headers to send with the request.
+ * @param {Object} options.cookies - The cookies to send with the request.
+ * @param {string} options.baseUrl - The base URL to use for the request.
+ *
+ * @returns {Promise<Object>} - A promise that resolves with the response data.
+ * @throws {InvalidRequestException} - If the request is invalid.
+ * @throws {AuthenticationException} - If the authentication fails.
+ * @throws {APIException} - If there is a problem with the API.
+ */
+const fetcher = async ({ url = '', method = 'post', data = {}, params = {}, headers = {}, cookies = {}, baseUrl = "", }: any) => {
     const computedUrl = new URL(url, baseUrl || PayPalEnvironment.getBaseUrl());
     const config: any = {
         method: method,
